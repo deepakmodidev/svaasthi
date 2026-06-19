@@ -2,7 +2,9 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth/server";
 import { sql } from "@/lib/db";
 import { CallNowButton, LogoutButton, RefreshButton } from "./dashboard-actions";
+import PushSetup from "./push-setup";
 import { fetchCallStatus } from "@/lib/ringg";
+import { notifyMissed } from "@/lib/push";
 
 export const dynamic = "force-dynamic";
 
@@ -63,7 +65,10 @@ export default async function Dashboard() {
   await Promise.all(
     inProgress.map(async (d) => {
       const s = await fetchCallStatus(d.ringg_call_id as string);
-      if (s) await sql`UPDATE doses SET status = ${s} WHERE id = ${d.id}`;
+      if (s) {
+        await sql`UPDATE doses SET status = ${s} WHERE id = ${d.id}`;
+        await notifyMissed(d.id as string);
+      }
     }),
   );
 
@@ -112,6 +117,7 @@ export default async function Dashboard() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <PushSetup />
           <RefreshButton />
           <LogoutButton />
         </div>

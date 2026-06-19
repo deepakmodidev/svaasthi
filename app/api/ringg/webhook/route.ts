@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { sql } from "@/lib/db";
 import { mapResult } from "@/lib/ringg";
+import { notifyMissed } from "@/lib/push";
 
 // Receives Ringg call-completion events (production path; needs a public URL).
 // dose_id arrives via callback_args.params (query string); we also fall back to call_id.
@@ -32,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   const status = mapResult(data);
 
-  let matched: unknown = null;
+  let matched: { id?: string } | undefined;
   if (doseId) {
     [matched] = await sql`
       UPDATE doses SET status = ${status} WHERE id = ${doseId}
@@ -44,6 +45,9 @@ export async function POST(req: NextRequest) {
       RETURNING id, status
     `;
   }
+
+  // Push a "missed dose" alert to the caregiver (once) when applicable.
+  if (matched?.id) await notifyMissed(matched.id);
 
   // Ack 200 fast regardless, so Ringg does not retry on our matching misses.
   return Response.json({ ok: true, status, matched: matched ?? null });

@@ -47,4 +47,18 @@ export async function ensureSchema(): Promise<void> {
   // One scheduled call per reminder per day — scheduled_for ("YYYY-MM-DDTHH:MM:SS"
   // in IST) is the per-day key. NULLs are distinct, so manual doses never collide.
   await sql`CREATE UNIQUE INDEX IF NOT EXISTS doses_reminder_sched_uniq ON doses (reminder_id, scheduled_for)`;
+
+  // Web Push: whether a "missed dose" notification was already sent for this dose.
+  await sql`ALTER TABLE doses ADD COLUMN IF NOT EXISTS notified boolean NOT NULL DEFAULT false`;
+
+  // One row per browser push subscription, owned by a user.
+  await sql`
+    CREATE TABLE IF NOT EXISTS push_subscriptions (
+      endpoint   text PRIMARY KEY,
+      user_id    text NOT NULL,
+      p256dh     text NOT NULL,
+      auth       text NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
 }
