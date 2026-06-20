@@ -3,12 +3,27 @@ import { sql } from "@/lib/db";
 
 const PUB = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const PRIV = process.env.VAPID_PRIVATE_KEY;
+
+// web-push requires the subject to be a mailto: or https: URL. Accept a bare
+// email (or anything) from the env and normalize it so a sloppy value can't
+// crash the build — this runs at import time during page-data collection.
+function vapidSubject(): string {
+  const raw = (process.env.VAPID_SUBJECT || "").trim();
+  if (raw.startsWith("mailto:") || raw.startsWith("https://")) return raw;
+  if (raw.includes("@")) return `mailto:${raw}`;
+  return "mailto:deepakmodi8676@gmail.com";
+}
+
+// Whether Web Push is usable. Guarded so a bad VAPID config degrades to "off"
+// instead of throwing and breaking unrelated routes / the build.
+let pushReady = false;
 if (PUB && PRIV) {
-  webpush.setVapidDetails(
-    process.env.VAPID_SUBJECT || "mailto:admin@svaasthi.app",
-    PUB,
-    PRIV,
-  );
+  try {
+    webpush.setVapidDetails(vapidSubject(), PUB, PRIV);
+    pushReady = true;
+  } catch (e) {
+    console.error("[push] invalid VAPID config — push disabled:", e);
+  }
 }
 
 const MISSED = ["not_taken", "no_answer", "voicemail", "failed"];
@@ -17,7 +32,7 @@ type Payload = { title: string; body: string; url?: string };
 
 // Send a push to every browser the user has subscribed. Prunes dead subscriptions.
 export async function sendPushToUser(userId: string, payload: Payload) {
-  if (!PUB || !PRIV) return;
+  if (!pushReady) return;
   const subs = await sql`
     SELECT endpoint, p256dh, auth FROM push_subscriptions WHERE user_id = ${userId}
   `;
