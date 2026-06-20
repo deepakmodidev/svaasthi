@@ -411,23 +411,23 @@ export default async function Dashboard() {
       </section>
 
       {/* History */}
-      <section className="mt-10">
+      <section className={`mt-4 p-6 ${card}`}>
         <h2 className={eyebrow}>Call history</h2>
         {dates.length === 0 ? (
-          <p className="mt-3 text-sm text-muted-foreground">
+          <p className="mt-4 text-sm text-muted-foreground">
             No calls yet - they&apos;ll appear here once the daily reminder runs or
             you press Call now.
           </p>
         ) : (
-          <div className="mt-4 flex flex-col gap-6">
+          <div className="mt-4 flex flex-col gap-5">
             {dates.map((date) => (
               <div key={date}>
-                <div className="mb-2 text-xs font-medium text-muted-foreground">
+                <div className="mb-1 text-xs font-medium text-muted-foreground">
                   {dateLabel(date)}
                 </div>
-                <ul className={`divide-y divide-border px-5 ${card}`}>
+                <ul className="divide-y divide-border">
                   {byDate[date].map((d) => (
-                    <li key={d.id} className="flex items-center gap-3 py-3.5 text-sm">
+                    <li key={d.id} className="flex items-center gap-3 py-3 text-sm">
                       <span className="w-12 shrink-0 tabular-nums text-muted-foreground">
                         {fmt(d.scheduled_for ?? d.created_at).slice(11)}
                       </span>
