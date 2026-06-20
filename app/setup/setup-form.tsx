@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Pill, Sunrise, Sun, Sunset, Moon, type LucideIcon } from "lucide-react";
+import { Sunrise, Sun, Sunset, Moon, type LucideIcon } from "lucide-react";
 
 const SLOTS = ["Morning", "Afternoon", "Evening", "Night"] as const;
 const DEFAULT_TIME: Record<string, string> = {

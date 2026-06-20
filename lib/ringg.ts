@@ -145,23 +145,29 @@ export async function placeRinggCall(opts: {
     };
   }
 
-  const res = await fetch(`${RINGG_BASE}/calling/outbound/individual`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-API-KEY": RINGG_API_KEY },
-    body: JSON.stringify(payload),
-  });
-  const text = await res.text();
-  let ringg: unknown;
   try {
-    ringg = JSON.parse(text);
-  } catch {
-    ringg = text;
-  }
+    const res = await fetch(`${RINGG_BASE}/calling/outbound/individual`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "X-API-KEY": RINGG_API_KEY },
+      body: JSON.stringify(payload),
+      signal: AbortSignal.timeout(15000),
+    });
+    const text = await res.text();
+    let ringg: unknown;
+    try {
+      ringg = JSON.parse(text);
+    } catch {
+      ringg = text;
+    }
 
-  const data = (ringg as { data?: { call_id?: string; call_status?: string } })?.data;
-  const callId = data?.call_id ?? null;
-  const status = res.ok
-    ? data?.call_status ?? (scheduledAt ? "scheduled" : "calling")
-    : "failed";
-  return { ok: res.ok, httpStatus: res.status, callId, status, ringg };
+    const data = (ringg as { data?: { call_id?: string; call_status?: string } })?.data;
+    const callId = data?.call_id ?? null;
+    const status = res.ok
+      ? data?.call_status ?? (scheduledAt ? "scheduled" : "calling")
+      : "failed";
+    return { ok: res.ok, httpStatus: res.status, callId, status, ringg };
+  } catch (e) {
+    // Network error / timeout — fail this call without throwing.
+    return { ok: false, httpStatus: 0, callId: null, status: "failed", ringg: { error: String(e) } };
+  }
 }

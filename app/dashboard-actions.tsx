@@ -98,7 +98,7 @@ export function ServiceToggleButton({ active }: { active: boolean }) {
   );
 }
 
-export function CallNowButton({ name, phone }: { name: string; phone: string }) {
+export function CallNowButton() {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   async function callNow() {
@@ -107,7 +107,7 @@ export function CallNowButton({ name, phone }: { name: string; phone: string }) 
       await fetch("/api/call", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, mobile_number: phone, slot: slotForNow() }),
+        body: JSON.stringify({ slot: slotForNow() }),
       });
       router.refresh();
     } finally {

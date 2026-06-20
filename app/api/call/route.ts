@@ -3,57 +3,40 @@ import { sql } from "@/lib/db";
 import { placeRinggCall } from "@/lib/ringg";
 import { requireUser } from "@/lib/auth/server";
 
-const E164 = /^\+[1-9]\d{7,14}$/;
-
-// Place one outbound Ringg call now (manual "Call now"), persisting a dose row.
+// Manual "Call now": place an immediate Ringg call to the user's own patient.
+// The number is read from the DB (not the client) so this can't be used to dial
+// arbitrary numbers.
 export async function POST(req: NextRequest) {
   const userId = await requireUser();
   if (typeof userId !== "string") return userId;
 
-  const { name, mobile_number, slot, scheduled_for } = await req.json();
-  if (!name || !mobile_number) {
-    return NextResponse.json(
-      { error: "name and mobile_number are required" },
-      { status: 400 },
-    );
-  }
-  if (!E164.test(mobile_number)) {
-    return NextResponse.json(
-      { error: "mobile_number must be E.164, e.g. +919876543210" },
-      { status: 400 },
-    );
+  const [patient] = await sql`
+    SELECT name, phone FROM patients WHERE user_id = ${userId}
+    ORDER BY created_at LIMIT 1
+  `;
+  if (!patient) {
+    return NextResponse.json({ error: "no patient set up" }, { status: 404 });
   }
 
-  const scheduledAt =
-    typeof scheduled_for === "string" && scheduled_for
-      ? scheduled_for.length === 16
-        ? `${scheduled_for}:00`
-        : scheduled_for
-      : null;
+  const body = await req.json().catch(() => ({}));
+  const slot = typeof body.slot === "string" && body.slot ? body.slot : "Morning";
+  const name = patient.name as string;
+  const phone = patient.phone as string;
 
   const [dose] = await sql`
-    INSERT INTO doses (name, phone, slot, status, scheduled_for, user_id)
-    VALUES (
-      ${name}, ${mobile_number}, ${slot ?? "Morning"},
-      ${scheduledAt ? "scheduled" : "calling"}, ${scheduledAt}, ${userId}
-    )
+    INSERT INTO doses (name, phone, slot, status, user_id)
+    VALUES (${name}, ${phone}, ${slot}, 'calling', ${userId})
     RETURNING id
   `;
   const doseId = dose.id as string;
 
-  const r = await placeRinggCall({
-    name,
-    mobile_number,
-    slot: slot ?? "Morning",
-    doseId,
-    scheduledAt,
-  });
+  const r = await placeRinggCall({ name, mobile_number: phone, slot, doseId });
   await sql`
     UPDATE doses SET status = ${r.status}, ringg_call_id = ${r.callId} WHERE id = ${doseId}
   `;
 
   return NextResponse.json(
-    { dose_id: doseId, http_status: r.httpStatus, ringg: r.ringg },
+    { dose_id: doseId, status: r.status },
     { status: r.ok ? 200 : r.httpStatus || 500 },
   );
 }

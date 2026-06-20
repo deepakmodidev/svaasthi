@@ -273,7 +273,7 @@ export default async function Dashboard() {
                 </div>
               </div>
             </div>
-            <CallNowButton name={p.name} phone={p.phone} />
+            <CallNowButton />
           </div>
         ))}
       </section>

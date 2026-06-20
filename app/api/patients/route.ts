@@ -42,30 +42,6 @@ export async function PATCH(req: NextRequest) {
   return NextResponse.json({ ok: true, active, count: updated.length, cancelled });
 }
 
-// List the current user's patients with their reminder times.
-export async function GET() {
-  const userId = await requireUser();
-  if (typeof userId !== "string") return userId;
-
-  const patients = await sql`
-    SELECT id, name, phone, active, created_at
-    FROM patients WHERE user_id = ${userId} ORDER BY created_at DESC
-  `;
-  const reminders = await sql`
-    SELECT r.id, r.patient_id, r.slot, r.time_local
-    FROM reminders r JOIN patients p ON p.id = r.patient_id
-    WHERE p.user_id = ${userId}
-  `;
-  return NextResponse.json({
-    patients: patients.map((p) => ({
-      ...p,
-      reminders: reminders
-        .filter((r) => r.patient_id === p.id)
-        .sort((a, b) => String(a.time_local).localeCompare(String(b.time_local))),
-    })),
-  });
-}
-
 // Create a patient (owned by the user) with reminder slots.
 export async function POST(req: NextRequest) {
   const userId = await requireUser();
