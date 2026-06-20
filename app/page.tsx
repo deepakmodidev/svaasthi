@@ -292,7 +292,7 @@ export default async function Dashboard() {
                   {soonest.time}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                  {soonest.slot} · {soonest.patient}
+                  {soonest.slot}
                   {soonest.when === "tomorrow" ? " · tomorrow" : ""}
                 </span>
               </div>
@@ -342,9 +342,6 @@ export default async function Dashboard() {
                       {s.time}
                     </span>
                     <span className="font-medium">{s.slot}</span>
-                    <span className="truncate text-muted-foreground">
-                      {s.patient}
-                    </span>
                     {s.status ? (
                       <span className={`ml-auto ${pill(s.status)}`}>
                         <StatusIcon status={s.status} />
@@ -433,8 +430,7 @@ export default async function Dashboard() {
                       </span>
                       <span className="font-medium">{d.slot}</span>
                       <span className="truncate text-muted-foreground">
-                        {d.name}
-                        {d.trigger === "scheduled" ? " · auto" : ""}
+                        {d.trigger === "scheduled" ? "auto" : "manual"}
                       </span>
                       <span className={`ml-auto ${pill(d.status)}`}>
                         <StatusIcon status={d.status} />
