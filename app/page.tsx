@@ -7,6 +7,7 @@ import {
   TriangleAlert,
   Voicemail,
   PhoneMissed,
+  ChevronDown,
 } from "lucide-react";
 import { auth } from "@/lib/auth/server";
 import { sql } from "@/lib/db";
@@ -44,6 +45,30 @@ const dateLabel = (iso: string) => {
     month: "short",
   });
 };
+
+const toMin = (t: string) => {
+  const [h, m] = t.split(":").map(Number);
+  return h * 60 + m;
+};
+
+// The next reminder that will fire for a patient, given the current IST minute.
+// Returns today's next slot, or tomorrow's first if all of today's have passed.
+function nextCall(
+  reminders: { slot: string; time_local: string }[],
+  nowMin: number,
+) {
+  if (reminders.length === 0) return null;
+  const sorted = [...reminders].sort(
+    (a, b) => toMin(a.time_local) - toMin(b.time_local),
+  );
+  const upcoming = sorted.find((r) => toMin(r.time_local) > nowMin);
+  const r = upcoming ?? sorted[0];
+  return {
+    slot: r.slot,
+    time: r.time_local,
+    when: upcoming ? ("today" as const) : ("tomorrow" as const),
+  };
+}
 
 // Status → pill classes (soft tint + inset ring).
 const pill = (s: string) => {
@@ -124,6 +149,13 @@ export default async function Dashboard() {
   }));
 
   const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const nowHM = new Date().toLocaleTimeString("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZone: "Asia/Kolkata",
+  });
+  const nowMin = toMin(nowHM);
   const todays = doses.filter((d) => dateOf(d) === today);
   const takenCount = todays.filter(
     (d) => d.status === "taken" || d.status === "completed",
@@ -139,6 +171,40 @@ export default async function Dashboard() {
   }
   const dates = Object.keys(byDate).sort().reverse();
   const userName = (user.name as string) || (user.email as string) || "";
+
+  // Soonest upcoming call across all patients (for the Next call card).
+  const upcoming = patients
+    .map((p) => {
+      const n = nextCall(p.reminders, nowMin);
+      return n ? { ...n, patient: p.name } : null;
+    })
+    .filter((x): x is NonNullable<typeof x> => x !== null)
+    .sort(
+      (a, b) =>
+        (a.when === "today" ? 0 : 1) - (b.when === "today" ? 0 : 1) ||
+        toMin(a.time) - toMin(b.time),
+    );
+  const soonest = upcoming[0] ?? null;
+
+  // Today's planned schedule (what the daily cron places) with live status.
+  const schedule = patients
+    .flatMap((p) =>
+      p.reminders.map((r) => {
+        const dose = todays.find(
+          (d) =>
+            d.slot === r.slot &&
+            (d.scheduled_for ?? "").slice(11, 16) === r.time_local,
+        );
+        return {
+          patient: p.name,
+          slot: r.slot,
+          time: r.time_local,
+          status: dose?.status ?? null,
+        };
+      }),
+    )
+    .sort((a, b) => toMin(a.time) - toMin(b.time));
+  const enqueuedToday = todays.filter((d) => d.trigger === "scheduled").length;
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
@@ -175,9 +241,10 @@ export default async function Dashboard() {
                 {p.name.charAt(0).toUpperCase()}
               </div>
               <div className="min-w-0">
-                <div className="flex min-w-0 items-baseline gap-2">
+                <div className="font-serif flex min-w-0 items-baseline gap-2">
                   <span className="truncate font-medium">{p.name}</span>
-                  <span className="shrink-0 text-sm text-muted-foreground">
+                  ||
+                  <span className="shrink-0">
                     {p.phone}
                   </span>
                 </div>
@@ -193,6 +260,80 @@ export default async function Dashboard() {
             <CallNowButton name={p.name} phone={p.phone} />
           </div>
         ))}
+      </section>
+
+      {/* Next call + cron status */}
+      <section className={`mt-4 p-6 ${card}`}>
+        <div className="flex items-center gap-3">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Clock className="h-5 w-5" />
+          </div>
+          <div className="min-w-0">
+            <span className={eyebrow}>Next call</span>
+            {soonest ? (
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                <span className="font-serif text-2xl leading-none">
+                  {soonest.time}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {soonest.slot} · {soonest.patient}
+                  {soonest.when === "tomorrow" ? " · tomorrow" : ""}
+                </span>
+              </div>
+            ) : (
+              <div className="mt-1 font-serif text-2xl leading-none text-muted-foreground">
+                No upcoming calls
+              </div>
+            )}
+          </div>
+        </div>
+
+        <details className="group mt-5 border-t border-border pt-4">
+          <summary className="flex list-none items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground [&::-webkit-details-marker]:hidden">
+            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
+            Cron status &amp; today&apos;s schedule
+          </summary>
+          <div className="mt-3">
+            <p className="text-xs text-muted-foreground">
+              Daily reminder cron runs at{" "}
+              <span className="font-medium text-foreground">00:15 IST</span> ·{" "}
+              {enqueuedToday > 0
+                ? `${enqueuedToday} call${enqueuedToday > 1 ? "s" : ""} enqueued today`
+                : "no calls enqueued yet today"}
+              .
+            </p>
+            {schedule.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">
+                No reminder times set.
+              </p>
+            ) : (
+              <ul className="mt-3 divide-y divide-border">
+                {schedule.map((s, i) => (
+                  <li key={i} className="flex items-center gap-3 py-2.5 text-sm">
+                    <span className="w-12 shrink-0 tabular-nums text-muted-foreground">
+                      {s.time}
+                    </span>
+                    <span className="font-medium">{s.slot}</span>
+                    <span className="truncate text-muted-foreground">
+                      {s.patient}
+                    </span>
+                    {s.status ? (
+                      <span className={`ml-auto ${pill(s.status)}`}>
+                        <StatusIcon status={s.status} />
+                        {s.status}
+                      </span>
+                    ) : (
+                      <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        scheduled
+                      </span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </details>
       </section>
 
       {/* Today */}
