@@ -1,16 +1,12 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Pause, Phone, Play, RefreshCw } from "lucide-react";
+import { LogOut, Pause, Phone, Play } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 
 // Small client islands for the otherwise server-rendered dashboard.
 // Each action hits an API then router.refresh() to re-run the server component.
-
-// Bordered pill — shared by the header actions (matches the Run now button).
-const ghost =
-  "inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-50";
 
 export function LogoutButton() {
   async function logout() {
@@ -24,22 +20,6 @@ export function LogoutButton() {
     >
       <LogOut className="h-4 w-4" />
       Log out
-    </button>
-  );
-}
-
-export function RefreshButton() {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-  // Re-runs the server component, which reconciles in-progress calls.
-  return (
-    <button
-      onClick={() => startTransition(() => router.refresh())}
-      disabled={pending}
-      className={ghost}
-    >
-      <RefreshCw className={`h-4 w-4 ${pending ? "animate-spin" : ""}`} />
-      {pending ? "Refreshing…" : "Refresh"}
     </button>
   );
 }

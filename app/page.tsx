@@ -15,7 +15,6 @@ import {
   CallNowButton,
   CronRunButton,
   LogoutButton,
-  RefreshButton,
   ServiceToggleButton,
 } from "./dashboard-actions";
 import PushSetup from "./push-setup";
@@ -233,7 +232,6 @@ export default async function Dashboard() {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <ServiceToggleButton active={anyActive} />
             <PushSetup />
-            <RefreshButton />
             <LogoutButton />
           </div>
         </div>
@@ -417,7 +415,7 @@ export default async function Dashboard() {
         <h2 className={eyebrow}>Call history</h2>
         {dates.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">
-            No calls yet — they&apos;ll appear here once the daily reminder runs or
+            No calls yet - they&apos;ll appear here once the daily reminder runs or
             you press Call now.
           </p>
         ) : (
