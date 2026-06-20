@@ -22,6 +22,8 @@ import PushSetup from "./push-setup";
 import Hero from "./hero";
 import { fetchCallStatus } from "@/lib/ringg";
 import { notifyMissed } from "@/lib/push";
+import { toMin, todayIST, nowMinIST } from "@/lib/time";
+import { MISSED } from "@/lib/status";
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +38,6 @@ type Dose = {
 };
 
 const PENDING = ["scheduled", "registered", "calling", "retry", "ongoing"];
-const MISSED = ["not_taken", "no_answer", "voicemail", "failed"];
 
 const fmt = (s: string) => s.replace("T", " ").slice(0, 16);
 const dateOf = (d: Dose) => (d.scheduled_for ?? d.created_at).slice(0, 10);
@@ -50,11 +51,6 @@ const dateLabel = (iso: string) => {
     day: "numeric",
     month: "short",
   });
-};
-
-const toMin = (t: string) => {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
 };
 
 // The next reminder that will fire for a patient, given the current IST minute.
@@ -156,14 +152,8 @@ export default async function Dashboard() {
       .map((r) => ({ slot: r.slot as string, time_local: r.time_local as string })),
   }));
 
-  const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-  const nowHM = new Date().toLocaleTimeString("en-GB", {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-    timeZone: "Asia/Kolkata",
-  });
-  const nowMin = toMin(nowHM);
+  const today = todayIST();
+  const nowMin = nowMinIST();
   const todays = doses.filter((d) => dateOf(d) === today);
   const takenCount = todays.filter(
     (d) => d.status === "taken" || d.status === "completed",

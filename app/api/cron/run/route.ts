@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { requireUser } from "@/lib/auth/server";
 import { enqueueToday } from "@/lib/enqueue";
 
@@ -10,5 +11,5 @@ export async function POST() {
   if (typeof userId !== "string") return userId;
 
   const result = await enqueueToday({ userId, onlyUpcoming: true });
-  return Response.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result });
 }

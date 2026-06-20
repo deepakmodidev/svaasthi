@@ -1,4 +1,4 @@
-import type { NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { enqueueToday } from "@/lib/enqueue";
 
 // Daily enqueue (Vercel Cron): schedule today's calls for every active patient.
@@ -13,11 +13,11 @@ export async function GET(req: NextRequest) {
       req.headers.get("x-cron-secret") ||
       (req.headers.get("authorization") || "").replace(/^Bearer\s+/i, "");
     if (provided !== secret) {
-      return Response.json({ error: "unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "unauthorized" }, { status: 401 });
     }
   }
 
   const dry = req.nextUrl.searchParams.get("dry") === "1";
   const result = await enqueueToday({ dry });
-  return Response.json({ ok: true, ...result });
+  return NextResponse.json({ ok: true, ...result });
 }

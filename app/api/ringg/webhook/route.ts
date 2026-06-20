@@ -1,4 +1,4 @@
-import type { NextRequest } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { mapResult } from "@/lib/ringg";
 import { notifyMissed } from "@/lib/push";
@@ -10,14 +10,14 @@ import { notifyMissed } from "@/lib/push";
 export async function POST(req: NextRequest) {
   const secret = process.env.RINGG_WEBHOOK_SECRET;
   if (secret && req.headers.get("x-webhook-secret") !== secret) {
-    return Response.json({ error: "invalid webhook secret" }, { status: 401 });
+    return NextResponse.json({ error: "invalid webhook secret" }, { status: 401 });
   }
 
   let body: Record<string, unknown>;
   try {
     body = (await req.json()) as Record<string, unknown>;
   } catch {
-    return Response.json({ error: "invalid JSON" }, { status: 400 });
+    return NextResponse.json({ error: "invalid JSON" }, { status: 400 });
   }
 
   const data = ((body.data as Record<string, unknown>) ?? body) as Record<string, unknown>;
@@ -54,5 +54,5 @@ export async function POST(req: NextRequest) {
   if (matched?.id) await notifyMissed(matched.id);
 
   // Ack 200 fast regardless, so Ringg does not retry on our matching misses.
-  return Response.json({ ok: true, status, matched: matched ?? null });
+  return NextResponse.json({ ok: true, status, matched: matched ?? null });
 }

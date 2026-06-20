@@ -1,10 +1,6 @@
 import { sql } from "@/lib/db";
 import { placeRinggCall } from "@/lib/ringg";
-
-const toMin = (t: string) => {
-  const [h, m] = t.split(":").map(Number);
-  return h * 60 + m;
-};
+import { toMin, todayIST, nowMinIST } from "@/lib/time";
 
 export type EnqueueResult = {
   date: string;
@@ -27,17 +23,8 @@ export async function enqueueToday(
 ): Promise<EnqueueResult> {
   const { userId, dry = false, onlyUpcoming = false } = opts;
 
-  const todayIST = new Date().toLocaleDateString("en-CA", {
-    timeZone: "Asia/Kolkata",
-  });
-  const nowMin = toMin(
-    new Date().toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-      timeZone: "Asia/Kolkata",
-    }),
-  );
+  const today = todayIST();
+  const nowMin = nowMinIST();
 
   const rows = userId
     ? await sql`
@@ -62,7 +49,7 @@ export async function enqueueToday(
       skippedPast++;
       continue;
     }
-    const scheduledAt = `${todayIST}T${timeLocal}:00`; // wall-clock IST; Ringg + dedupe key
+    const scheduledAt = `${today}T${timeLocal}:00`; // wall-clock IST; Ringg + dedupe key
 
     if (dry) {
       const exists = await sql`
@@ -106,5 +93,5 @@ export async function enqueueToday(
     enqueued.push({ dose_id: doseId, slot: row.slot, scheduled_for: scheduledAt, status: r.status });
   }
 
-  return { date: todayIST, dry, count: enqueued.length, skippedPast, enqueued };
+  return { date: today, dry, count: enqueued.length, skippedPast, enqueued };
 }

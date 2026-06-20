@@ -1,5 +1,6 @@
 import webpush from "web-push";
 import { sql } from "@/lib/db";
+import { MISSED } from "@/lib/status";
 
 const PUB = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const PRIV = process.env.VAPID_PRIVATE_KEY;
@@ -25,8 +26,6 @@ if (PUB && PRIV) {
     console.error("[push] invalid VAPID config — push disabled:", e);
   }
 }
-
-const MISSED = ["not_taken", "no_answer", "voicemail", "failed"];
 
 type Payload = { title: string; body: string; url?: string };
 
