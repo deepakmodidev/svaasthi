@@ -33,7 +33,10 @@ export async function POST(req: NextRequest) {
   const userId = await requireUser();
   if (typeof userId !== "string") return userId;
 
-  const { name, phone, reminders } = await req.json();
+  const body = await req.json();
+  const name = typeof body.name === "string" ? body.name.trim() : "";
+  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
+  const reminders = body.reminders;
   if (!name || !phone) {
     return NextResponse.json({ error: "name and phone are required" }, { status: 400 });
   }
@@ -44,9 +47,28 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const list: ReminderInput[] = Array.isArray(reminders)
-    ? reminders.filter((r) => r && r.slot && r.time_local)
-    : [];
+  // Guard: one patient per phone number per user. Prevents accidentally
+  // creating a second patient on the same number (which would double-call it).
+  const dup = await sql`
+    SELECT 1 FROM patients WHERE user_id = ${userId} AND phone = ${phone} LIMIT 1
+  `;
+  if (dup.length > 0) {
+    return NextResponse.json(
+      { error: "A patient with this phone number already exists" },
+      { status: 409 },
+    );
+  }
+
+  // Dedupe reminders so the same slot+time can't be inserted twice.
+  const seen = new Set<string>();
+  const list: ReminderInput[] = (Array.isArray(reminders) ? reminders : [])
+    .filter((r) => r && r.slot && r.time_local)
+    .filter((r) => {
+      const key = `${r.slot}|${r.time_local}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
 
   const [patient] = await sql`
     INSERT INTO patients (name, phone, user_id) VALUES (${name}, ${phone}, ${userId})
