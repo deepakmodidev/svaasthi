@@ -1,8 +1,24 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/auth/server";
+import { enqueueToday } from "@/lib/enqueue";
 
 type ReminderInput = { slot: string; time_local: string };
+
+// Pause / resume the whole service: flip active on all of the user's patients.
+// The cron and Run now enqueue only WHERE active = true, so pausing stops every
+// scheduled call until resumed.
+export async function PATCH(req: NextRequest) {
+  const userId = await requireUser();
+  if (typeof userId !== "string") return userId;
+
+  const body = await req.json().catch(() => ({}));
+  const active = Boolean(body.active);
+  const updated = await sql`
+    UPDATE patients SET active = ${active} WHERE user_id = ${userId} RETURNING id
+  `;
+  return NextResponse.json({ ok: true, active, count: updated.length });
+}
 
 // List the current user's patients with their reminder times.
 export async function GET() {
@@ -83,5 +99,20 @@ export async function POST(req: NextRequest) {
     `;
   }
 
-  return NextResponse.json({ patient_id: patientId, reminders: list.length });
+  // Schedule today's still-upcoming calls immediately, so a patient set up at
+  // 1pm gets today's 2pm/6pm/etc. calls without waiting for the 00:15 cron.
+  // Skips slots already passed. Idempotent, and never fails the setup.
+  let scheduledNow = 0;
+  try {
+    const result = await enqueueToday({ userId, onlyUpcoming: true });
+    scheduledNow = result.count;
+  } catch (e) {
+    console.error("[patients] initial enqueue failed:", e);
+  }
+
+  return NextResponse.json({
+    patient_id: patientId,
+    reminders: list.length,
+    scheduledNow,
+  });
 }

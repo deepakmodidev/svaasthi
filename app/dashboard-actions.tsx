@@ -83,14 +83,15 @@ export function CronRunButton() {
   );
 }
 
-export function PauseResumeButton({ id, active }: { id: string; active: boolean }) {
+// Header service switch: pauses/resumes reminders for ALL the user's patients.
+// `active` = the service is currently on (at least one patient active).
+export function ServiceToggleButton({ active }: { active: boolean }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
-  // Toggles patients.active — pausing stops all scheduled/cron calls for them.
   async function toggle() {
     setBusy(true);
     try {
-      await fetch(`/api/patients/${id}`, {
+      await fetch("/api/patients", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ active: !active }),
@@ -104,14 +105,14 @@ export function PauseResumeButton({ id, active }: { id: string; active: boolean 
     <button
       onClick={toggle}
       disabled={busy}
-      title={active ? "Pause reminders" : "Resume reminders"}
-      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-50"
+      title={active ? "Pause all reminders" : "Resume reminders"}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors disabled:opacity-50 ${
+        active
+          ? "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground"
+          : "border-amber-300 bg-amber-50 text-amber-700 hover:border-amber-400"
+      }`}
     >
-      {active ? (
-        <Pause className="h-4 w-4" />
-      ) : (
-        <Play className="h-4 w-4" />
-      )}
+      {active ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
       {busy ? "…" : active ? "Pause" : "Resume"}
     </button>
   );

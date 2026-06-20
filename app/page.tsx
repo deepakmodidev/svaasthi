@@ -15,8 +15,8 @@ import {
   CallNowButton,
   CronRunButton,
   LogoutButton,
-  PauseResumeButton,
   RefreshButton,
+  ServiceToggleButton,
 } from "./dashboard-actions";
 import PushSetup from "./push-setup";
 import Hero from "./hero";
@@ -216,6 +216,7 @@ export default async function Dashboard() {
     .sort((a, b) => toMin(a.time) - toMin(b.time));
   const enqueuedToday = todays.filter((d) => d.trigger === "scheduled").length;
   const allPaused = patients.length > 0 && patients.every((p) => !p.active);
+  const anyActive = patients.some((p) => p.active);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
@@ -229,7 +230,8 @@ export default async function Dashboard() {
               Svaasthi
             </span>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <ServiceToggleButton active={anyActive} />
             <PushSetup />
             <RefreshButton />
             <LogoutButton />
@@ -273,10 +275,7 @@ export default async function Dashboard() {
                 </div>
               </div>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
-              <PauseResumeButton id={p.id} active={p.active} />
-              <CallNowButton name={p.name} phone={p.phone} />
-            </div>
+            <CallNowButton name={p.name} phone={p.phone} />
           </div>
         ))}
       </section>
