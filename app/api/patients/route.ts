@@ -2,22 +2,44 @@ import { type NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { requireUser } from "@/lib/auth/server";
 import { enqueueToday } from "@/lib/enqueue";
+import { terminateCalls } from "@/lib/ringg";
 
 type ReminderInput = { slot: string; time_local: string };
 
 // Pause / resume the whole service: flip active on all of the user's patients.
-// The cron and Run now enqueue only WHERE active = true, so pausing stops every
-// scheduled call until resumed.
+// The cron and Run now enqueue only WHERE active = true, so pausing stops future
+// scheduling. Pausing ALSO cancels today's still-pending calls on Ringg (they're
+// already scheduled on Ringg's side, so the flag alone wouldn't stop them).
 export async function PATCH(req: NextRequest) {
   const userId = await requireUser();
   if (typeof userId !== "string") return userId;
 
   const body = await req.json().catch(() => ({}));
   const active = Boolean(body.active);
+
+  let cancelled = 0;
+  if (!active) {
+    // Cancel not-yet-fired calls on Ringg (registered = scheduled / retry), then
+    // drop those dose rows so the slots are free to be re-scheduled via Run now.
+    const pending = await sql`
+      SELECT ringg_call_id FROM doses
+      WHERE user_id = ${userId} AND status IN ('registered', 'retry')
+        AND ringg_call_id IS NOT NULL
+    `;
+    const callIds = pending.map((d) => d.ringg_call_id as string);
+    if (callIds.length > 0) await terminateCalls(callIds);
+    const removed = await sql`
+      DELETE FROM doses
+      WHERE user_id = ${userId} AND status IN ('registered', 'retry', 'scheduled')
+      RETURNING id
+    `;
+    cancelled = removed.length;
+  }
+
   const updated = await sql`
     UPDATE patients SET active = ${active} WHERE user_id = ${userId} RETURNING id
   `;
-  return NextResponse.json({ ok: true, active, count: updated.length });
+  return NextResponse.json({ ok: true, active, count: updated.length, cancelled });
 }
 
 // List the current user's patients with their reminder times.

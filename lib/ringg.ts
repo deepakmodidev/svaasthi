@@ -60,6 +60,27 @@ export async function fetchCallStatus(ringgCallId: string): Promise<string | nul
   }
 }
 
+// Cancel queued/retry calls on Ringg by call ID (PATCH /campaign/terminate,
+// max 100/request). Terminates calls still in "registered" (scheduled, not yet
+// fired) or "retry" state. Used when a patient is paused so they aren't dialed.
+// Returns true if Ringg accepted the termination.
+export async function terminateCalls(callIds: string[]): Promise<boolean> {
+  const { RINGG_API_KEY } = process.env;
+  const ids = callIds.filter(Boolean).slice(0, 100);
+  if (!RINGG_API_KEY || ids.length === 0) return false;
+  try {
+    const res = await fetch(`${RINGG_BASE}/campaign/terminate`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", "X-API-KEY": RINGG_API_KEY },
+      body: JSON.stringify({ call_ids: ids }),
+      signal: AbortSignal.timeout(8000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 // Place one outbound Ringg call. Shared by the manual route and the cron, so the
 // payload (custom vars, scheduled_at, webhook callback) stays identical everywhere.
 export async function placeRinggCall(opts: {
