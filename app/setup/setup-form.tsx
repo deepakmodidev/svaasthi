@@ -7,7 +7,7 @@ const SLOTS = ["Morning", "Afternoon", "Evening", "Night"] as const;
 const DEFAULT_TIME: Record<string, string> = {
   Morning: "08:00",
   Afternoon: "14:00",
-  Evening: "20:00",
+  Evening: "18:00",
   Night: "22:00",
 };
 const SLOT_ICON: Record<string, LucideIcon> = {

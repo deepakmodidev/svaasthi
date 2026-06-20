@@ -11,7 +11,12 @@ import {
 } from "lucide-react";
 import { auth } from "@/lib/auth/server";
 import { sql } from "@/lib/db";
-import { CallNowButton, LogoutButton, RefreshButton } from "./dashboard-actions";
+import {
+  CallNowButton,
+  CronRunButton,
+  LogoutButton,
+  RefreshButton,
+} from "./dashboard-actions";
 import PushSetup from "./push-setup";
 import Hero from "./hero";
 import { fetchCallStatus } from "@/lib/ringg";
@@ -294,14 +299,17 @@ export default async function Dashboard() {
             Cron status &amp; today&apos;s schedule
           </summary>
           <div className="mt-3">
-            <p className="text-xs text-muted-foreground">
-              Daily reminder cron runs at{" "}
-              <span className="font-medium text-foreground">00:15 IST</span> ·{" "}
-              {enqueuedToday > 0
-                ? `${enqueuedToday} call${enqueuedToday > 1 ? "s" : ""} enqueued today`
-                : "no calls enqueued yet today"}
-              .
-            </p>
+            <div className="flex items-start justify-between gap-3">
+              <p className="text-xs text-muted-foreground">
+                Daily reminder cron runs at{" "}
+                <span className="font-medium text-foreground">00:15 IST</span> ·{" "}
+                {enqueuedToday > 0
+                  ? `${enqueuedToday} call${enqueuedToday > 1 ? "s" : ""} enqueued today`
+                  : "no calls enqueued yet today"}
+                .
+              </p>
+              <CronRunButton />
+            </div>
             {schedule.length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">
                 No reminder times set.
@@ -322,10 +330,15 @@ export default async function Dashboard() {
                         <StatusIcon status={s.status} />
                         {s.status}
                       </span>
-                    ) : (
+                    ) : toMin(s.time) > nowMin ? (
                       <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
                         <Clock className="h-3 w-3" />
                         scheduled
+                      </span>
+                    ) : (
+                      <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                        <XCircle className="h-3 w-3" />
+                        no call
                       </span>
                     )}
                   </li>

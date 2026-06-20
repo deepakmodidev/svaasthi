@@ -62,7 +62,7 @@ export default function PushSetup() {
     return (
       <button
         onClick={() => fetch("/api/push/test", { method: "POST" })}
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+        className="inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
       >
         <BellRing className="h-4 w-4" />
         Test alert
@@ -74,7 +74,7 @@ export default function PushSetup() {
     <button
       onClick={enable}
       disabled={state === "working"}
-      className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:underline disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 rounded-full border border-border px-3.5 py-1.5 text-sm font-medium text-primary transition-colors hover:border-primary/40 disabled:opacity-50"
     >
       <Bell className="h-4 w-4" />
       {state === "working" ? "Enabling…" : "Enable alerts"}
