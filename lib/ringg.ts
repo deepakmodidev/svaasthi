@@ -1,5 +1,6 @@
+import { IST } from "@/lib/constants";
+
 export const RINGG_BASE = "https://prod-api.ringg.ai/ca/api/v0";
-export const TIMEZONE = "Asia/Kolkata";
 
 function findBool(obj: unknown, key: string): boolean | undefined {
   if (!obj || typeof obj !== "object") return undefined;
@@ -131,7 +132,7 @@ export async function placeRinggCall(opts: {
       call_time: {
         call_start_time: "00:00",
         call_end_time: "23:59",
-        timezone: TIMEZONE,
+        timezone: IST,
         scheduled_at: scheduledAt,
       },
     };

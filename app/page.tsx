@@ -22,8 +22,7 @@ import PushSetup from "./push-setup";
 import Hero from "./hero";
 import { fetchCallStatus } from "@/lib/ringg";
 import { notifyMissed } from "@/lib/push";
-import { toMin, todayIST, nowMinIST } from "@/lib/time";
-import { MISSED } from "@/lib/status";
+import { toMin, todayIST, nowMinIST, PENDING, MISSED } from "@/lib/constants";
 
 export const dynamic = "force-dynamic";
 
@@ -36,8 +35,6 @@ type Dose = {
   trigger: string;
   created_at: string;
 };
-
-const PENDING = ["scheduled", "registered", "calling", "retry", "ongoing"];
 
 const fmt = (s: string) => s.replace("T", " ").slice(0, 16);
 const dateOf = (d: Dose) => (d.scheduled_for ?? d.created_at).slice(0, 10);

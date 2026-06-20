@@ -1,6 +1,6 @@
 import { sql } from "@/lib/db";
 import { placeRinggCall } from "@/lib/ringg";
-import { toMin, todayIST, nowMinIST } from "@/lib/time";
+import { toMin, todayIST, nowMinIST } from "@/lib/constants";
 
 export type EnqueueResult = {
   date: string;

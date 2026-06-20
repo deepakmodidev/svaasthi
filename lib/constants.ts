@@ -1,5 +1,6 @@
-// Svaasthi is India-only and India has no DST, so every time is Asia/Kolkata
-// wall-clock. Centralised here so the dashboard, cron, and enqueue agree.
+// Shared constants and the small IST helpers. Svaasthi is India-only and India
+// has no DST, so every time is Asia/Kolkata wall-clock.
+
 export const IST = "Asia/Kolkata";
 
 // "HH:MM" → minutes since midnight.
@@ -22,3 +23,8 @@ export const nowMinIST = () =>
       timeZone: IST,
     }),
   );
+
+// Dose statuses grouped by how the dashboard treats them. MISSED also drives the
+// missed-dose push, so the tally and the notifier never drift apart.
+export const PENDING = ["scheduled", "registered", "calling", "retry", "ongoing"];
+export const MISSED = ["not_taken", "no_answer", "voicemail", "failed"];

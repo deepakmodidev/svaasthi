@@ -1,6 +1,6 @@
 import webpush from "web-push";
 import { sql } from "@/lib/db";
-import { MISSED } from "@/lib/status";
+import { MISSED } from "@/lib/constants";
 
 const PUB = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
 const PRIV = process.env.VAPID_PRIVATE_KEY;
