@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { Pill } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 
 const field =
-  "w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-600 dark:focus:ring-white/10";
+  "h-12 w-full rounded-xl border border-border bg-card px-4 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export default function AuthForm({
   initialMode,
@@ -46,16 +47,37 @@ export default function AuthForm({
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center gap-2">
-          <h1 className="text-xl font-semibold tracking-tight">Svaasthi</h1>
+    <main className="relative flex min-h-screen flex-col items-center justify-center overflow-hidden p-6">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 opacity-70"
+      >
+        <img
+          src="/auth-gradient.svg"
+          alt=""
+          className="h-auto w-full translate-y-2/3 scale-150 rotate-180 object-cover"
+        />
+      </div>
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mb-6 flex items-center justify-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Pill className="h-5 w-5" />
+          </div>
+          <span className="font-serif text-2xl font-normal tracking-tight">
+            Svaasthi
+          </span>
         </div>
-        <p className="mt-1 text-sm text-zinc-500">
-          {mode === "signup" ? "Create your account" : "Welcome back"}
+        <div className="rounded-3xl border border-border bg-card p-8 shadow-sm">
+          <h1 className="font-serif text-3xl font-normal tracking-tight">
+            {mode === "signup" ? "Create your account" : "Welcome back"}
+          </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {mode === "signup"
+            ? "Start reminding the people you care for."
+            : "Sign in to check in on your family."}
         </p>
 
-        <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+        <form onSubmit={submit} className="mt-7 flex flex-col gap-4">
           {mode === "signup" && (
             <div className="flex flex-col gap-1.5">
               <label htmlFor="name" className="text-sm font-medium">
@@ -80,6 +102,7 @@ export default function AuthForm({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              placeholder="you@example.com"
               className={field}
             />
           </div>
@@ -94,13 +117,14 @@ export default function AuthForm({
               onChange={(e) => setPassword(e.target.value)}
               required
               minLength={8}
+              placeholder={mode === "signup" ? "At least 8 characters" : "••••••••"}
               className={field}
             />
           </div>
           <button
             type="submit"
             disabled={loading}
-            className="mt-1 w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="mt-1 h-12 w-full rounded-full bg-foreground text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
           >
             {loading
               ? "Please wait…"
@@ -108,16 +132,23 @@ export default function AuthForm({
                 ? "Create account"
                 : "Log in"}
           </button>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p
+              role="alert"
+              className="rounded-xl border border-rose-600/20 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+            >
+              {error}
+            </p>
+          )}
         </form>
 
-        <p className="mt-5 text-center text-sm text-zinc-500">
+        <p className="mt-6 text-center text-sm text-muted-foreground">
           {mode === "signup" ? (
             <>
               Already have an account?{" "}
               <button
                 onClick={() => switchMode("login")}
-                className="font-medium text-emerald-600 hover:underline"
+                className="font-medium text-primary hover:underline"
               >
                 Log in
               </button>
@@ -127,13 +158,14 @@ export default function AuthForm({
               New here?{" "}
               <button
                 onClick={() => switchMode("signup")}
-                className="font-medium text-emerald-600 hover:underline"
+                className="font-medium text-primary hover:underline"
               >
                 Sign up
               </button>
             </>
           )}
         </p>
+        </div>
       </div>
     </main>
   );

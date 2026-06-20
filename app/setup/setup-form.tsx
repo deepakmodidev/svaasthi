@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Pill, Sunrise, Sun, Sunset, Moon, type LucideIcon } from "lucide-react";
 
 const SLOTS = ["Morning", "Afternoon", "Evening", "Night"] as const;
 const DEFAULT_TIME: Record<string, string> = {
@@ -9,9 +10,15 @@ const DEFAULT_TIME: Record<string, string> = {
   Evening: "20:00",
   Night: "22:00",
 };
+const SLOT_ICON: Record<string, LucideIcon> = {
+  Morning: Sunrise,
+  Afternoon: Sun,
+  Evening: Sunset,
+  Night: Moon,
+};
 
 const field =
-  "rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm outline-none transition placeholder:text-zinc-400 focus:border-zinc-400 focus:ring-2 focus:ring-zinc-900/10 dark:border-zinc-700 dark:bg-zinc-950 dark:focus:border-zinc-600 dark:focus:ring-white/10";
+  "h-12 w-full rounded-xl border border-border bg-card px-4 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/20";
 
 export default function SetupForm() {
   const [parent, setParent] = useState("");
@@ -53,20 +60,39 @@ export default function SetupForm() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-md rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-        <h1 className="text-xl font-semibold tracking-tight">Quick setup</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          One time only — who are we reminding, and when?
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden p-6">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-0 z-0 opacity-70"
+      >
+        <img
+          src="/auth-gradient.svg"
+          alt=""
+          className="h-auto w-full translate-y-2/3 scale-150 rotate-180 object-cover"
+        />
+      </div>
+      <div className="relative z-10 w-full max-w-md rounded-3xl border border-border bg-card p-8 shadow-sm">
+        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <Pill className="h-5 w-5" />
+        </div>
+        <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
+          Quick setup
+        </span>
+        <h1 className="mt-2 font-serif text-3xl font-normal tracking-tight">
+          Who are we reminding?
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          One time only — add your parent and the times to call.
         </p>
 
-        <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+        <form onSubmit={submit} className="mt-7 flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium">Parent&apos;s name</label>
             <input
               value={parent}
               onChange={(e) => setParent(e.target.value)}
               required
+              placeholder="e.g. Amma"
               className={field}
             />
           </div>
@@ -85,44 +111,55 @@ export default function SetupForm() {
 
           <div className="flex flex-col gap-2">
             <span className="text-sm font-medium">Reminder times</span>
-            <p className="-mt-1 text-xs text-zinc-500">
+            <p className="-mt-1 text-xs text-muted-foreground">
               Pick the slots you want — leave the rest blank.
             </p>
-            {SLOTS.map((s) => (
+            {SLOTS.map((s) => {
+              const Icon = SLOT_ICON[s];
+              return (
               <div
                 key={s}
-                className="flex items-center gap-3 rounded-lg border border-zinc-200 px-3 py-2 dark:border-zinc-800"
+                className="flex items-center gap-3 rounded-2xl border border-border px-4 py-2.5"
               >
-                <span className="w-20 text-sm">{s}</span>
+                <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                <span className="w-16 text-sm font-medium">{s}</span>
                 <input
                   type="time"
                   value={times[s] ?? ""}
                   onChange={(e) =>
                     setTimes((t) => ({ ...t, [s]: e.target.value }))
                   }
-                  className="rounded-md border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+                  className="rounded-lg border border-border bg-card px-2.5 py-1.5 text-sm"
                 />
                 <button
                   type="button"
                   onClick={() =>
                     setTimes((t) => ({ ...t, [s]: DEFAULT_TIME[s] }))
                   }
-                  className="ml-auto text-xs font-medium text-emerald-600 hover:underline"
+                  className="ml-auto text-xs font-medium text-primary hover:underline"
                 >
                   use {DEFAULT_TIME[s]}
                 </button>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <button
             type="submit"
             disabled={saving}
-            className="mt-1 w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-200"
+            className="mt-1 h-12 w-full rounded-full bg-foreground text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-50"
           >
             {saving ? "Saving…" : "Finish setup"}
           </button>
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && (
+            <p
+              role="alert"
+              className="rounded-xl border border-rose-600/20 bg-rose-50 px-4 py-3 text-sm text-rose-700"
+            >
+              {error}
+            </p>
+          )}
         </form>
       </div>
     </main>

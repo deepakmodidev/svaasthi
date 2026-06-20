@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Bell, BellRing } from "lucide-react";
 
 const VAPID = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY ?? "";
 
@@ -61,9 +62,10 @@ export default function PushSetup() {
     return (
       <button
         onClick={() => fetch("/api/push/test", { method: "POST" })}
-        className="text-sm font-medium text-zinc-500 transition hover:text-zinc-900 dark:hover:text-zinc-100"
+        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
-        🔔 Test alert
+        <BellRing className="h-4 w-4" />
+        Test alert
       </button>
     );
   }
@@ -72,9 +74,10 @@ export default function PushSetup() {
     <button
       onClick={enable}
       disabled={state === "working"}
-      className="text-sm font-medium text-emerald-600 transition hover:underline disabled:opacity-50"
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-primary transition hover:underline disabled:opacity-50"
     >
-      {state === "working" ? "Enabling…" : "🔔 Enable alerts"}
+      <Bell className="h-4 w-4" />
+      {state === "working" ? "Enabling…" : "Enable alerts"}
     </button>
   );
 }
