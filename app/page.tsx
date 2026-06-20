@@ -8,6 +8,7 @@ import {
   Voicemail,
   PhoneMissed,
   ChevronDown,
+  Ban,
 } from "lucide-react";
 import { auth } from "@/lib/auth/server";
 import { sql } from "@/lib/db";
@@ -84,7 +85,7 @@ const pill = (s: string) => {
         ? "bg-rose-50 text-rose-700 ring-rose-600/20"
         : s === "voicemail"
           ? "bg-amber-50 text-amber-700 ring-amber-600/20"
-          : s === "no_answer"
+          : s === "no_answer" || s === "cancelled"
             ? "bg-zinc-100 text-zinc-600 ring-zinc-500/20"
             : "bg-blue-50 text-blue-700 ring-blue-600/20";
   return `inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${tone}`;
@@ -99,6 +100,7 @@ function StatusIcon({ status }: { status: string }) {
     return <XCircle className={cls} />;
   if (status === "voicemail") return <Voicemail className={cls} />;
   if (status === "no_answer") return <PhoneMissed className={cls} />;
+  if (status === "cancelled") return <Ban className={cls} />;
   return <Clock className={cls} />;
 }
 

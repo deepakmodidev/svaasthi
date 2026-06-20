@@ -76,11 +76,15 @@ export async function enqueueToday(
       continue;
     }
 
+    // Insert, or revive a previously cancelled slot (re-schedule after a pause).
+    // A non-cancelled existing row fails the WHERE → no update → skipped.
     const inserted = await sql`
       INSERT INTO doses (name, phone, slot, status, scheduled_for, user_id, reminder_id, trigger)
       VALUES (${row.name}, ${row.phone}, ${row.slot}, 'scheduled', ${scheduledAt},
               ${row.user_id}, ${row.reminder_id}, 'scheduled')
-      ON CONFLICT (reminder_id, scheduled_for) DO NOTHING
+      ON CONFLICT (reminder_id, scheduled_for) DO UPDATE
+        SET status = 'scheduled', ringg_call_id = NULL
+        WHERE doses.status = 'cancelled'
       RETURNING id
     `;
     if (!inserted.length) {

@@ -28,12 +28,13 @@ export async function PATCH(req: NextRequest) {
     `;
     const callIds = pending.map((d) => d.ringg_call_id as string);
     if (callIds.length > 0) await terminateCalls(callIds);
-    const removed = await sql`
-      DELETE FROM doses
+    // Mark (don't delete) so the rows stay in Call History as "cancelled".
+    const stopped = await sql`
+      UPDATE doses SET status = 'cancelled'
       WHERE user_id = ${userId} AND status IN ('registered', 'retry', 'scheduled')
       RETURNING id
     `;
-    cancelled = removed.length;
+    cancelled = stopped.length;
   }
 
   const updated = await sql`

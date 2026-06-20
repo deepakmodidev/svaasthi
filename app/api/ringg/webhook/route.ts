@@ -33,15 +33,19 @@ export async function POST(req: NextRequest) {
 
   const status = mapResult(data);
 
+  // Never overwrite a dose the user already cancelled (paused) — a late
+  // termination event for that call must not flip it back to failed/missed.
   let matched: { id?: string } | undefined;
   if (doseId) {
     [matched] = await sql`
-      UPDATE doses SET status = ${status} WHERE id = ${doseId}
+      UPDATE doses SET status = ${status}
+      WHERE id = ${doseId} AND status != 'cancelled'
       RETURNING id, status
     `;
   } else if (callId) {
     [matched] = await sql`
-      UPDATE doses SET status = ${status} WHERE ringg_call_id = ${callId}
+      UPDATE doses SET status = ${status}
+      WHERE ringg_call_id = ${callId} AND status != 'cancelled'
       RETURNING id, status
     `;
   }
