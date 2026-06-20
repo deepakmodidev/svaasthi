@@ -15,6 +15,7 @@ import {
   CallNowButton,
   CronRunButton,
   LogoutButton,
+  PauseResumeButton,
   RefreshButton,
 } from "./dashboard-actions";
 import PushSetup from "./push-setup";
@@ -111,7 +112,7 @@ export default async function Dashboard() {
   if (!user) return <Hero />;
 
   const patientRows = await sql`
-    SELECT id, name, phone FROM patients WHERE user_id = ${user.id} ORDER BY created_at DESC
+    SELECT id, name, phone, active FROM patients WHERE user_id = ${user.id} ORDER BY created_at DESC
   `;
   if (patientRows.length === 0) redirect("/setup");
 
@@ -148,6 +149,7 @@ export default async function Dashboard() {
     id: p.id as string,
     name: p.name as string,
     phone: p.phone as string,
+    active: p.active as boolean,
     reminders: reminderRows
       .filter((r) => r.patient_id === p.id)
       .map((r) => ({ slot: r.slot as string, time_local: r.time_local as string })),
@@ -177,8 +179,9 @@ export default async function Dashboard() {
   const dates = Object.keys(byDate).sort().reverse();
   const userName = (user.name as string) || (user.email as string) || "";
 
-  // Soonest upcoming call across all patients (for the Next call card).
+  // Soonest upcoming call across active (non-paused) patients.
   const upcoming = patients
+    .filter((p) => p.active)
     .map((p) => {
       const n = nextCall(p.reminders, nowMin);
       return n ? { ...n, patient: p.name } : null;
@@ -192,7 +195,9 @@ export default async function Dashboard() {
   const soonest = upcoming[0] ?? null;
 
   // Today's planned schedule (what the daily cron places) with live status.
+  // Paused patients are excluded — the cron won't call them.
   const schedule = patients
+    .filter((p) => p.active)
     .flatMap((p) =>
       p.reminders.map((r) => {
         const dose = todays.find(
@@ -210,6 +215,7 @@ export default async function Dashboard() {
     )
     .sort((a, b) => toMin(a.time) - toMin(b.time));
   const enqueuedToday = todays.filter((d) => d.trigger === "scheduled").length;
+  const allPaused = patients.length > 0 && patients.every((p) => !p.active);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-6 py-12">
@@ -239,7 +245,7 @@ export default async function Dashboard() {
         {patients.map((p) => (
           <div
             key={p.id}
-            className={`flex items-center justify-between gap-4 p-5 transition-colors hover:border-primary/40 ${card}`}
+            className={`flex items-center justify-between gap-4 p-5 transition-colors hover:border-primary/40 ${card} ${p.active ? "" : "opacity-70"}`}
           >
             <div className="flex min-w-0 items-center gap-4">
               <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10 font-serif text-lg text-primary">
@@ -252,6 +258,11 @@ export default async function Dashboard() {
                   <span className="shrink-0">
                     {p.phone}
                   </span>
+                  {!p.active && (
+                    <span className="shrink-0 rounded-full bg-zinc-100 px-2 py-0.5 font-sans text-xs font-medium text-zinc-500 ring-1 ring-inset ring-zinc-500/20">
+                      Paused
+                    </span>
+                  )}
                 </div>
                 <div className="mt-0.5 truncate text-sm text-muted-foreground">
                   {p.reminders.length
@@ -262,7 +273,10 @@ export default async function Dashboard() {
                 </div>
               </div>
             </div>
-            <CallNowButton name={p.name} phone={p.phone} />
+            <div className="flex shrink-0 items-center gap-2">
+              <PauseResumeButton id={p.id} active={p.active} />
+              <CallNowButton name={p.name} phone={p.phone} />
+            </div>
           </div>
         ))}
       </section>
@@ -283,6 +297,15 @@ export default async function Dashboard() {
                 <span className="text-sm text-muted-foreground">
                   {soonest.slot} · {soonest.patient}
                   {soonest.when === "tomorrow" ? " · tomorrow" : ""}
+                </span>
+              </div>
+            ) : allPaused ? (
+              <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                <span className="font-serif text-2xl leading-none text-muted-foreground">
+                  Paused
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  resume to schedule calls
                 </span>
               </div>
             ) : (

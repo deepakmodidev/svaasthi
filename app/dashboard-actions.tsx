@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { LogOut, Phone, Play, RefreshCw } from "lucide-react";
+import { LogOut, Pause, Phone, Play, RefreshCw } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 
 // Small client islands for the otherwise server-rendered dashboard.
@@ -79,6 +79,40 @@ export function CronRunButton() {
     >
       <Play className={`h-3.5 w-3.5 ${busy ? "animate-pulse" : ""}`} />
       {busy ? "Running…" : "Run now"}
+    </button>
+  );
+}
+
+export function PauseResumeButton({ id, active }: { id: string; active: boolean }) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  // Toggles patients.active — pausing stops all scheduled/cron calls for them.
+  async function toggle() {
+    setBusy(true);
+    try {
+      await fetch(`/api/patients/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: !active }),
+      });
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <button
+      onClick={toggle}
+      disabled={busy}
+      title={active ? "Pause reminders" : "Resume reminders"}
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-border px-3.5 py-2 text-sm font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground disabled:opacity-50"
+    >
+      {active ? (
+        <Pause className="h-4 w-4" />
+      ) : (
+        <Play className="h-4 w-4" />
+      )}
+      {busy ? "…" : active ? "Pause" : "Resume"}
     </button>
   );
 }

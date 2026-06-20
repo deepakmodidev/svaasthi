@@ -71,10 +71,7 @@ export default function SetupForm() {
           className="h-auto w-full translate-y-2/3 scale-150 rotate-180 object-cover"
         />
       </div>
-      <div className="relative z-10 w-full max-w-md rounded-3xl border border-border bg-card p-8 shadow-sm">
-        <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-          <Pill className="h-5 w-5" />
-        </div>
+      <div className="relative z-10 w-full max-w-xl rounded-3xl border border-border bg-card p-8 shadow-sm">
         <span className="text-xs font-medium uppercase tracking-[0.2em] text-muted-foreground">
           Quick setup
         </span>
