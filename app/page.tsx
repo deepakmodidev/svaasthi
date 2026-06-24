@@ -1,6 +1,5 @@
 import { redirect } from "next/navigation";
 import {
-  Pill,
   CheckCircle2,
   XCircle,
   Clock,
@@ -211,9 +210,11 @@ export default async function Dashboard() {
       <header>
         <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <Pill className="h-5 w-5" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="Svaasthi Logo"
+              className="h-9 w-9 shrink-0 rounded-xl object-cover"
+            />
             <span className="font-serif text-2xl font-normal tracking-tight">
               Svaasthi
             </span>
@@ -262,7 +263,7 @@ export default async function Dashboard() {
                 </div>
               </div>
             </div>
-            <CallNowButton />
+            <CallNowButton disabled={!p.active} />
           </div>
         ))}
       </section>
@@ -317,7 +318,7 @@ export default async function Dashboard() {
                   : "no calls enqueued yet today"}
                 .
               </p>
-              <CronRunButton />
+              <CronRunButton disabled={!anyActive} />
             </div>
             {schedule.length === 0 ? (
               <p className="mt-3 text-sm text-muted-foreground">

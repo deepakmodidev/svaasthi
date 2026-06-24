@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Pill } from "lucide-react";
 import { authClient } from "@/lib/auth/client";
 
 const field =
@@ -60,9 +59,11 @@ export default function AuthForm({
       </div>
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-6 flex items-center justify-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Pill className="h-5 w-5" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Svaasthi Logo"
+            className="h-9 w-9 shrink-0 rounded-xl object-cover"
+          />
           <span className="font-serif text-2xl font-normal tracking-tight">
             Svaasthi
           </span>

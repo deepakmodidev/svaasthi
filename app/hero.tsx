@@ -1,6 +1,5 @@
 import Link from "next/link";
 import {
-  Pill,
   Phone,
   BellRing,
   LayoutDashboard,
@@ -26,9 +25,11 @@ export default function Hero() {
       {/* Top bar */}
       <header className="relative z-10 mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-6">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Pill className="h-5 w-5" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Svaasthi Logo"
+            className="h-9 w-9 shrink-0 rounded-xl object-cover"
+          />
           <span className="font-serif text-2xl font-normal tracking-tight">
             Svaasthi
           </span>
