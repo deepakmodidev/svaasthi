@@ -36,9 +36,10 @@ export default function Hero() {
         </div>
         <Link
           href="/auth?mode=login"
-          className="rounded-full border border-border bg-card px-5 py-2 text-sm font-medium transition-colors hover:border-primary/40"
+          className="group inline-flex items-center gap-2 rounded-full bg-foreground px-5 py-2 text-sm font-medium text-background transition hover:opacity-90"
         >
           Sign in
+          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
       </header>
 
@@ -72,6 +73,14 @@ export default function Hero() {
           >
             Sign in
           </Link>
+        </div>
+
+        {/* Product Hunt Badge */}
+        <div className="mt-10">
+          <a href="https://www.producthunt.com/products/svaasthi?embed=true&utm_source=badge-featured&utm_medium=badge&utm_campaign=badge-svaasthi" target="_blank" rel="noopener noreferrer">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img alt="Svaasthi - Voice AI Agent for family-first medicine reminders | Product Hunt" width="250" height="54" src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=1179689&theme=light&t=1782280674780" />
+          </a>
         </div>
 
         {/* What it does */}
